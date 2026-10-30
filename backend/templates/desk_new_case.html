@@ -1,0 +1,65 @@
+{% extends "base_email.html" %}
+
+{% block header_title %}NEW CASE #{{ issue.id }}: {{ issue.title }}{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 16px;">
+  <span class="badge badge-{{ issue.priority | lower }}">{{ issue.priority }} Priority</span>
+  <span style="font-size: 12px; color: #64748b; margin-left: 8px;">Category: <strong>{{ issue.category }}</strong></span>
+</div>
+
+<p style="font-size: 14px; line-height: 1.6; color: #334155; margin-top: 0;">
+  {{ executive_summary | default(issue.description) }}
+</p>
+
+<div class="card">
+  <table style="width: 100%; font-size: 13px; border-collapse: collapse;">
+    <tr>
+      <td style="padding: 6px 0; color: #64748b; width: 140px;">📍 Location:</td>
+      <td style="padding: 6px 0; font-weight: 700; color: #0f172a;">
+        {{ issue.location }}
+        {% if issue.latitude and issue.longitude %}
+          <a href="https://www.openstreetmap.org/?mlat={{ issue.latitude }}&mlon={{ issue.longitude }}#map=16/{{ issue.latitude }}/{{ issue.longitude }}" target="_blank" style="color: #2563eb; text-decoration: none; margin-left: 6px; font-size: 11px;">[View on OSM Map ↗]</a>
+        {% endif %}
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 6px 0; color: #64748b;">👥 Citizens Affected:</td>
+      <td style="padding: 6px 0; font-weight: 700; color: #2563eb;">{{ issue.complaint_count }} Reports Merged</td>
+    </tr>
+    <tr>
+      <td style="padding: 6px 0; color: #64748b;">⏱️ SLA Acknowledge:</td>
+      <td style="padding: 6px 0; font-weight: 700; color: #dc2626;">Please acknowledge within {{ sla_ack_minutes }} minutes</td>
+    </tr>
+    {% if issue.safety_risk %}
+    <tr>
+      <td style="padding: 6px 0; color: #64748b;">⚠️ Safety Risk:</td>
+      <td style="padding: 6px 0; color: #b91c1c; font-weight: 700;">{{ issue.urgency_reason | default("Immediate public safety hazard identified by AI.") }}</td>
+    </tr>
+    {% endif %}
+    {% if issue.suggested_action %}
+    <tr>
+      <td style="padding: 6px 0; color: #64748b;">🛠️ Recommended Action:</td>
+      <td style="padding: 6px 0; color: #0f172a;">{{ issue.suggested_action }}</td>
+    </tr>
+    {% endif %}
+  </table>
+</div>
+
+{% if photo_url %}
+<div style="margin: 16px 0; text-align: center;">
+  <img src="{{ photo_url }}" alt="Citizen Evidence" style="max-width: 100%; height: auto; border-radius: 10px; border: 1px solid #e2e8f0; max-height: 240px; object-fit: cover;">
+  <span style="display: block; font-size: 11px; color: #64748b; margin-top: 4px;">Citizen Photo Evidence</span>
+</div>
+{% endif %}
+
+<div style="margin-top: 24px; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 20px;">
+  <p style="font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em;">
+    One-Click Desk Officer Action (No Login Required)
+  </p>
+  <a href="{{ magic_accept_url }}" class="btn btn-emerald">✓ Accept Case</a>
+  <a href="{{ magic_assign_url }}" class="btn">👤 Assign to Me</a>
+  <a href="{{ magic_needs_info_url }}" class="btn btn-amber">❓ Need More Info</a>
+  <a href="{{ magic_resolve_url }}" class="btn btn-slate">🏁 Mark Resolved</a>
+</div>
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends "base_email.html" %}
+
+{% block header_title %}⚠️ Citizens Disputed Fix — Case Reopened{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 16px;">
+  <span class="badge badge-critical" style="font-size: 13px; padding: 6px 12px;">CASE REOPENED #{{ issue.id }}</span>
+  <span class="badge badge-high" style="margin-left: 8px;">Priority Escalated: {{ issue.priority }}</span>
+</div>
+
+<div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+  <h2 style="margin: 0 0 8px 0; font-size: 17px; color: #991b1b; font-weight: 800;">
+    Citizens rejected the proposed resolution
+  </h2>
+  <p style="margin: 0; color: #7f1d1d; font-size: 13px; line-height: 1.5;">
+    Citizens inspected the site and reported that the issue remains unresolved. This case has been automatically reopened, escalated to the Department Head & Commissioner, and the department's Trust Score has been adjusted downwards.
+  </p>
+</div>
+
+<div class="card">
+  <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">
+    Issue Title & Ward
+  </div>
+  <div style="font-size: 16px; font-weight: 800; color: #0f172a; margin-bottom: 8px;">
+    {{ issue.title }}
+  </div>
+  <div style="font-size: 13px; color: #334155; margin-bottom: 6px;">
+    <strong>Location:</strong> {{ issue.location_name }}
+  </div>
+  <div style="font-size: 13px; color: #334155; margin-bottom: 6px;">
+    <strong>Department:</strong> {{ department.name }}
+  </div>
+  <div style="font-size: 13px; color: #334155;">
+    <strong>Reopen Count:</strong> {{ issue.reopen_count }} time(s)
+  </div>
+</div>
+
+<div class="card" style="border-left: 4px solid #ef4444;">
+  <h3 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 800; color: #991b1b;">
+    Citizen Verdict & Review Feedback
+  </h3>
+  {% if reviews and reviews|length > 0 %}
+    {% for r in reviews %}
+      <div style="padding: 10px; background-color: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 8px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+          <span style="font-size: 14px; color: #eab308; font-weight: 800;">
+            {% for i in range(r.rating) %}★{% endfor %}{% for i in range(5 - r.rating) %}☆{% endfor %}
+          </span>
+          {% if r.still_broken %}
+            <span class="badge badge-critical" style="font-size: 10px;">Marked Still Broken</span>
+          {% endif %}
+        </div>
+        <div style="font-size: 12px; color: #334155; font-style: italic;">
+          "{{ r.comment | default('No written comment provided') }}"
+        </div>
+        <div style="font-size: 10px; color: #94a3b8; margin-top: 4px;">
+          Reported by: {{ r.citizen_email }}
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p style="font-size: 12px; color: #64748b; margin: 0;">No written feedback logged.</p>
+  {% endif %}
+</div>
+
+<div style="text-align: center; margin: 24px 0 10px 0;">
+  <a href="{{ action_links.accept }}" class="btn btn-emerald" style="padding: 14px 28px; font-size: 14px;">
+    Re-Acknowledge & Assign Inspection
+  </a>
+</div>
+
+<div style="text-align: center; font-size: 11px; color: #64748b; margin-top: 8px;">
+  An on-site inspection must re-verify the fix with new photographic evidence.
+</div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base_email.html" %}
+
+{% block header_title %}⏳ SLA REMINDER: Case #{{ issue.id }}{% endblock %}
+
+{% block content %}
+<div style="background-color: #fffbeb; border: 1px solid #fef3c7; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px;">
+  <span style="font-size: 14px; font-weight: 800; color: #b45309;">
+    ⚠️ Action Required: Case Acknowledgment Pending
+  </span>
+  <p style="font-size: 12px; color: #92400e; margin: 4px 0 0 0;">
+    Case #{{ issue.id }} was dispatched to {{ issue.department }} {{ elapsed_minutes }} minutes ago and has not yet been acknowledged.
+  </p>
+</div>
+
+<h2 style="font-size: 16px; font-weight: 800; color: #0f172a; margin: 0 0 8px 0;">
+  {{ issue.title }}
+</h2>
+<p style="font-size: 13px; color: #475569; margin: 0 0 16px 0;">
+  📍 Location: <strong>{{ issue.location }}</strong> | Priority: <strong>{{ issue.priority }}</strong>
+</p>
+
+<p style="font-size: 13px; color: #334155; line-height: 1.6;">
+  Please acknowledge this case or assign it to an officer. If unacknowledged within the next SLA window, this case will automatically escalate to the Department Head and Municipal Commissioner.
+</p>
+
+<div style="margin-top: 24px; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 20px;">
+  <a href="{{ magic_accept_url }}" class="btn btn-emerald">✓ Accept Case Immediately</a>
+  <a href="{{ magic_assign_url }}" class="btn">👤 Assign to Me</a>
+</div>
+{% endblock %}

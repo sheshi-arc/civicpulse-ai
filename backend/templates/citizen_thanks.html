@@ -1,0 +1,48 @@
+{% extends "base_email.html" %}
+
+{% block header_title %}Citizen Verification Logged{% endblock %}
+
+{% block content %}
+<div style="text-align: center; padding: 20px 0;">
+  <div style="font-size: 48px; line-height: 1; margin-bottom: 16px;">
+    {% if rating and rating >= 4 %}🎉{% elif rating and rating <= 2 %}⚠️{% else %}🤝{% endif %}
+  </div>
+  <h2 style="margin: 0 0 10px 0; font-size: 20px; font-weight: 800; color: #0f172a;">
+    Thank You for Your Civic Verification
+  </h2>
+  <p style="margin: 0 auto; max-width: 460px; font-size: 14px; color: #475569; line-height: 1.5;">
+    Your feedback directly holds municipal authorities accountable. In CivicPulse AI, no civic ticket can be permanently closed without citizen sign-off.
+  </p>
+</div>
+
+<div class="card" style="text-align: left;">
+  <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">
+    Issue Reference
+  </div>
+  <div style="font-size: 15px; font-weight: 800; color: #0f172a; margin-bottom: 8px;">
+    {{ issue.title }}
+  </div>
+  <div style="font-size: 13px; color: #334155; margin-bottom: 6px;">
+    <strong>Your Rating:</strong>
+    <span style="color: #eab308; font-weight: 800;">
+      {% for i in range(rating | default(5)) %}★{% endfor %}{% for i in range(5 - (rating | default(5))) %}☆{% endfor %}
+    </span>
+    ({{ rating | default(5) }}/5)
+  </div>
+  {% if still_broken %}
+    <div style="font-size: 12px; color: #dc2626; font-weight: 700; margin-top: 6px;">
+      Status: You reported that the problem remains broken. The case has been escalated back to the department and Commissioner.
+    </div>
+  {% else %}
+    <div style="font-size: 12px; color: #16a34a; font-weight: 700; margin-top: 6px;">
+      Status: Fix confirmed. The department's Trust Score has been credited.
+    </div>
+  {% endif %}
+</div>
+
+<div style="text-align: center; margin-top: 24px;">
+  <a href="{{ public_base_url }}/track?id={{ complaint_id | default('') }}" class="btn" style="background-color: #0f172a;">
+    View Live Issue Timeline
+  </a>
+</div>
+{% endblock %}

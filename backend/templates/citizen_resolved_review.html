@@ -1,0 +1,76 @@
+{% extends "base_email.html" %}
+
+{% block header_title %}VERIFY RESOLUTION: Case #{{ issue.id }}{% endblock %}
+
+{% block content %}
+<p style="font-size: 14px; font-weight: 700; color: #0f172a; margin-top: 0;">
+  Dear Citizen,
+</p>
+<p style="font-size: 13px; color: #334155; line-height: 1.6;">
+  The <strong>{{ issue.department }}</strong> department has completed maintenance work on the issue you reported:
+</p>
+
+<h2 style="font-size: 16px; font-weight: 800; color: #0f172a; margin: 12px 0 4px 0;">
+  {{ issue.title }}
+</h2>
+<p style="font-size: 12px; color: #64748b; margin: 0 0 16px 0;">
+  📍 {{ issue.location }}
+</p>
+
+<!-- AI Resolution Receipt -->
+<div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+  <span style="font-size: 11px; font-weight: 800; color: #15803d; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">
+    📜 Official AI Resolution Receipt
+  </span>
+  <p style="font-size: 13px; color: #166534; line-height: 1.6; margin: 0;">
+    {{ resolution_receipt | default(issue.resolution_note) }}
+  </p>
+</div>
+
+<!-- Before & After Photo Comparison -->
+<table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+  <tr>
+    <td style="width: 50%; padding-right: 8px; vertical-align: top;">
+      <span style="font-size: 11px; font-weight: 700; color: #64748b; display: block; margin-bottom: 4px;">BEFORE (Citizen Evidence)</span>
+      {% if before_photo_url %}
+        <img src="{{ before_photo_url }}" alt="Before fix" style="width: 100%; height: 160px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0;">
+      {% else %}
+        <div style="width: 100%; height: 160px; background-color: #f1f5f9; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #94a3b8; text-align: center; padding: 10px;">Initial Citizen Report</div>
+      {% endif %}
+    </td>
+    <td style="width: 50%; padding-left: 8px; vertical-align: top;">
+      <span style="font-size: 11px; font-weight: 700; color: #059669; display: block; margin-bottom: 4px;">AFTER (Officer Proof of Fix)</span>
+      {% if after_photo_url %}
+        <img src="{{ after_photo_url }}" alt="After fix" style="width: 100%; height: 160px; object-fit: cover; border-radius: 8px; border: 1px solid #86efac;">
+      {% else %}
+        <div style="width: 100%; height: 160px; background-color: #ecfdf5; border-radius: 8px; border: 1px solid #86efac; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #059669; text-align: center; padding: 10px;">Maintenance Completed Proof</div>
+      {% endif %}
+    </td>
+  </tr>
+</table>
+
+<!-- Citizen Verdict Question -->
+<div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 20px; text-align: center; margin-top: 24px;">
+  <h3 style="font-size: 15px; font-weight: 800; color: #0f172a; margin: 0 0 6px 0;">
+    Was it really fixed? You decide.
+  </h3>
+  <p style="font-size: 12px; color: #64748b; margin: 0 0 16px 0;">
+    Your rating directly impacts the department's public Trust Score.
+  </p>
+
+  <!-- 5 Star Buttons -->
+  <div style="margin-bottom: 16px;">
+    {% for star in [1, 2, 3, 4, 5] %}
+      <a href="{{ magic_review_url }}&rating={{ star }}" style="display: inline-block; padding: 8px 12px; background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; color: #f59e0b; font-size: 18px; text-decoration: none; margin: 0 2px; font-weight: 700;">
+        {{ "★" * star }}
+      </a>
+    {% endfor %}
+  </div>
+
+  <div>
+    <a href="{{ magic_still_broken_url }}" style="display: inline-block; padding: 10px 18px; background-color: #dc2626; color: #ffffff !important; text-decoration: none; font-size: 12px; font-weight: 800; border-radius: 8px;">
+      🚨 It is Still Broken (Auto-Reopen Case)
+    </a>
+  </div>
+</div>
+{% endblock %}

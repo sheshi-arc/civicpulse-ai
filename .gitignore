@@ -42,6 +42,10 @@ wheels/
 .pytest_cache/
 *.db
 *.sqlite3
+backend/outbox/
+outbox/
+backend/uploads/
+uploads/
 
 # Operating System Files
 .DS_Store

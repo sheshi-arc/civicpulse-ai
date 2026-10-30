@@ -1,0 +1,44 @@
+{% extends "base_email.html" %}
+
+{% block header_title %}⚡ IMPACT SURGE: Case #{{ issue.id }}{% endblock %}
+
+{% block content %}
+<div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px;">
+  <span style="font-size: 14px; font-weight: 800; color: #b91c1c;">
+    🔥 Surge Threshold Crossed: {{ threshold }} Citizens Affected!
+  </span>
+  <p style="font-size: 12px; color: #7f1d1d; margin: 4px 0 0 0;">
+    Complaints for this master issue have rapidly accumulated. Priority automatically escalated to <strong>{{ issue.priority }}</strong>.
+  </p>
+</div>
+
+<h2 style="font-size: 16px; font-weight: 800; color: #0f172a; margin: 0 0 8px 0;">
+  {{ issue.title }}
+</h2>
+<p style="font-size: 13px; color: #475569; margin: 0 0 16px 0;">
+  📍 Location: <strong>{{ issue.location }}</strong> | Department: <strong>{{ issue.department }}</strong>
+</p>
+
+<div class="card">
+  <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 8px;">
+    Latest Citizen Reports (City Memory Clustered):
+  </span>
+  <ul style="margin: 0; padding-left: 18px; font-size: 13px; color: #334155; line-height: 1.6;">
+    {% for c in recent_complaints %}
+      <li style="margin-bottom: 6px;"><em>&ldquo;{{ c.text }}&rdquo;</em></li>
+    {% else %}
+      <li>Multiple citizens independently reported identical road damage.</li>
+    {% endfor %}
+  </ul>
+</div>
+
+<div style="margin-top: 24px; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 20px;">
+  <p style="font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 12px; text-transform: uppercase;">
+    Take Immediate Action:
+  </p>
+  <a href="{{ magic_accept_url }}" class="btn btn-emerald">✓ Accept Case</a>
+  <a href="{{ magic_assign_url }}" class="btn">👤 Assign to Me</a>
+  <a href="{{ magic_needs_info_url }}" class="btn btn-amber">❓ Need More Info</a>
+  <a href="{{ magic_resolve_url }}" class="btn btn-slate">🏁 Mark Resolved</a>
+</div>
+{% endblock %}

@@ -1,3 +1,11 @@
 fastapi
 uvicorn
 httpx
+python-multipart
+itsdangerous
+apscheduler
+jinja2
+bcrypt
+pyjwt
+pytest
+email-validator
