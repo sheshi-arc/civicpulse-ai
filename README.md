@@ -8,6 +8,7 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16.4+-black.svg?logo=next.js)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178c6.svg?logo=typescript)](https://www.typescriptlang.org)
 [![Ollama](https://img.shields.io/badge/Ollama-Qwen3%20%2B%20BGE--M3-white.svg)](https://ollama.ai)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fsheshi-arc%2Fcivicpulse-ai&root-directory=frontend)
 
 ---
 
@@ -111,6 +112,44 @@ npm run dev
 ```
 
 Visit [http://localhost:3000](http://localhost:3000) to open the CivicPulse AI platform.
+
+---
+
+## 🚀 Deploying Frontend on Vercel
+
+### 1-Click Instant Deploy
+Click below to clone and deploy CivicPulse AI directly on Vercel:
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fsheshi-arc%2Fcivicpulse-ai&root-directory=frontend)
+
+**Direct Vercel Deploy Link:**
+```
+https://vercel.com/new/clone?repository-url=https://github.com/sheshi-arc/civicpulse-ai&root-directory=frontend
+```
+
+### Manual Vercel Project Import
+1. Go to your [Vercel Dashboard](https://vercel.com/dashboard) and click **Add New... → Project**.
+2. Import **`sheshi-arc/civicpulse-ai`**.
+3. In **Project Settings**:
+   - **Framework Preset**: `Next.js`
+   - **Root Directory**: Click *Edit* and select **`frontend`**
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `.next`
+4. In **Environment Variables**, add:
+   - `NEXT_PUBLIC_API_URL`: Your hosted backend URL (e.g. `https://your-api-domain.com` or backend server)
+5. Click **Deploy**. Vercel will build and assign your live production URL (e.g., `https://civicpulse-ai.vercel.app`).
+
+### Linking via Vercel CLI
+If deploying from your terminal:
+```bash
+# Authenticate
+npx vercel login
+
+# Link and deploy from frontend folder
+cd frontend
+npx vercel link
+npx vercel --prod
+```
 
 ---
 

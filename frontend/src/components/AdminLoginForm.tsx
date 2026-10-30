@@ -160,3 +160,4 @@ export default function AdminLoginForm({ onSuccess }: AdminLoginFormProps) {
     </div>
   );
 }
+
