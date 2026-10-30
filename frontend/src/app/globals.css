@@ -7,10 +7,15 @@
   --foreground: #0f172a;
 }
 
+html.dark {
+  color-scheme: dark;
+  --background: #090d16;
+  --foreground: #f1f5f9;
+}
+
 html, body {
-  background-color: #f8fafc !important;
-  color: #0f172a !important;
-  color-scheme: light !important;
+  background-color: var(--background);
+  color: var(--foreground);
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   margin: 0;
   padding: 0;
@@ -18,8 +23,18 @@ html, body {
 }
 
 main {
-  background-color: #f8fafc !important;
-  color: #0f172a !important;
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+html.dark body {
+  background-color: #090d16 !important;
+  color: #f1f5f9 !important;
+}
+
+html.dark main {
+  background-color: #090d16 !important;
+  color: #f1f5f9 !important;
 }
 
 /* Leaflet Container & Marker fixes */

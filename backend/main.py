@@ -17,6 +17,7 @@ import httpx
 from auth import router as auth_router, init_admin_user
 from desk_routes import router as desk_router
 from dev_routes import router as dev_router
+from admin_routes import router as admin_router
 from scheduler import start_scheduler, stop_scheduler
 from db_migrations import run_migrations
 from desk_service import orchestrate_new_issue_workflow, orchestrate_merged_issue_workflow, send_citizen_receipt_email
@@ -53,6 +54,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(desk_router)
 app.include_router(dev_router)
+app.include_router(admin_router)
 
 
 # Uploads directory
@@ -195,6 +197,9 @@ class ComplaintRequest(BaseModel):
     longitude: Optional[float] = None
     photo_url: Optional[str] = None
     citizen_email: Optional[str] = None
+    reporter_name: Optional[str] = None
+    reporter_phone: Optional[str] = None
+    category: Optional[str] = None
 
 class SimilarityRequest(BaseModel):
     complaint_a: str
@@ -597,17 +602,19 @@ async def submit_complaint(request: ComplaintRequest, background_tasks: Backgrou
                 "status": "active"
             }
 
-        # Save complaint record including citizen_email
+        # Save complaint record including citizen_email, reporter_name, reporter_phone
         cursor.execute("""
             INSERT INTO complaints (
-                tracking_id, citizen_email, text, category, subcategory, priority, department, location,
+                tracking_id, citizen_email, reporter_name, reporter_phone, text, category, subcategory, priority, department, location,
                 latitude, longitude, summary, photo_url, safety_risk, issue_id, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             tracking_id,
             request.citizen_email,
+            request.reporter_name,
+            request.reporter_phone,
             cleaned_complaint,
-            analysis["category"],
+            request.category or analysis["category"],
             analysis.get("subcategory", ""),
             analysis["priority"],
             analysis["department"],
@@ -679,38 +686,67 @@ async def track_complaint(tracking_id: str):
             raise HTTPException(status_code=404, detail=f"Tracking ID '{tracking_id}' not found.")
 
         data = dict(row)
-        desk_st = data.get("desk_status") or "EMAILED"
-        is_closed = desk_st == "CLOSED"
-        is_pending_review = desk_st == "RESOLVED_PENDING_REVIEW"
-        is_reopened = desk_st == "REOPENED"
-        is_acknowledged = desk_st in ["ACKNOWLEDGED", "IN_PROGRESS", "NEEDS_INFO", "RESOLVED_PENDING_REVIEW", "CLOSED"]
+        raw_desk_st = (data.get("desk_status") or "NEW").upper()
 
-        # Build live timeline stages according to Prompt 6 & 8
-        stage5_title = "Municipal Verification & Fix"
-        stage5_completed = False
-        stage5_status = "In Progress"
+        # Map to canonical 6 production statuses
+        if raw_desk_st in ["NEW", "EMAILED"]:
+            canonical_status = "NEW"
+        elif raw_desk_st in ["ASSIGNED", "ACKNOWLEDGED"]:
+            canonical_status = "ASSIGNED"
+        elif raw_desk_st == "IN_PROGRESS":
+            canonical_status = "IN_PROGRESS"
+        elif raw_desk_st in ["ON_HOLD", "NEEDS_INFO"]:
+            canonical_status = "ON_HOLD"
+        elif raw_desk_st in ["COMPLETED", "RESOLVED_PENDING_REVIEW"]:
+            canonical_status = "COMPLETED"
+        elif raw_desk_st in ["RESOLVED", "CLOSED"]:
+            canonical_status = "RESOLVED"
+        else:
+            canonical_status = raw_desk_st
 
-        if is_closed:
-            count = data.get("verified_citizen_count") or 1
-            stage5_title = f"Completed (Verified by {count} citizen{'s' if count != 1 else ''})"
-            stage5_completed = True
-            stage5_status = "Closed & Citizen Verified"
-        elif is_pending_review:
-            stage5_title = "Fixed, awaiting citizen confirmation"
-            stage5_completed = False
-            stage5_status = "Awaiting Citizen Verification"
-        elif is_reopened:
-            stage5_title = "Fix Disputed by Citizens — Case Reopened"
-            stage5_completed = False
-            stage5_status = "Reopened"
+        is_closed = canonical_status == "RESOLVED"
+        is_completed = canonical_status in ["COMPLETED", "RESOLVED"]
+        is_in_progress = canonical_status in ["IN_PROGRESS", "ON_HOLD", "COMPLETED", "RESOLVED"]
+        is_assigned = canonical_status != "NEW"
 
+        # Sanitize sensitive citizen contact details to prevent IDOR scraping
+        citizen_email = data.get("citizen_email") or ""
+        masked_email = ""
+        if "@" in citizen_email:
+            parts = citizen_email.split("@", 1)
+            masked_email = (parts[0][:2] + "***" if len(parts[0]) > 2 else "***") + "@" + parts[1]
+
+        safe_complaint = {
+            "id": data.get("id"),
+            "tracking_id": data.get("tracking_id"),
+            "text": data.get("text"),
+            "category": data.get("category"),
+            "subcategory": data.get("subcategory"),
+            "priority": data.get("priority"),
+            "department": data.get("department"),
+            "location": data.get("location"),
+            "created_at": data.get("created_at"),
+            "photo_url": data.get("photo_url"),
+            "reporter_name": data.get("reporter_name") or "Verified Citizen",
+            "citizen_email_masked": masked_email,
+        }
+
+        # Build live timeline stages matching canonical statuses
         timeline = [
             {"step": "Report Submitted", "completed": True, "time": data.get("created_at")},
-            {"step": "City Memory Clustered", "completed": True, "detail": f"Master Issue #{data.get('issue_id')} ({data.get('issue_count', 1)} citizens merged)"},
-            {"step": "Department Emailed & Acknowledged", "completed": is_acknowledged, "detail": data.get("department")},
-            {"step": "Field Inspection & Repair", "completed": is_pending_review or is_closed, "detail": "Crew deployed on site"},
-            {"step": stage5_title, "completed": stage5_completed, "status": stage5_status}
+            {"step": "City Memory Clustered", "completed": True, "detail": f"Master Issue #{data.get('issue_id')} ({data.get('issue_count', 1)} citizen reports merged)"},
+            {"step": "Assigned to Municipal Operations", "completed": is_assigned, "detail": data.get("department")},
+            {"step": "Field Work in Progress" if canonical_status != "ON_HOLD" else "Work Paused (On Hold)", "completed": is_in_progress, "status": canonical_status},
+            {"step": "Resolution & Verification", "completed": is_completed, "status": "Completed" if canonical_status == "COMPLETED" else "Resolved" if canonical_status == "RESOLVED" else "Pending"}
         ]
+
+        # Fetch public notes for this ticket
+        cursor.execute("""
+            SELECT content, note_type, created_at FROM ticket_notes 
+            WHERE issue_id = ? AND note_type IN ('public', 'system')
+            ORDER BY created_at ASC
+        """, (data.get("issue_id"),))
+        public_notes = [dict(n) for n in cursor.fetchall()]
 
         return {
             "success": True,
@@ -719,18 +755,20 @@ async def track_complaint(tracking_id: str):
             "issue_id": data.get("issue_id"),
             "issue_title": data.get("issue_title"),
             "issue_status": data.get("issue_status"),
-            "desk_status": desk_st,
-            "status": data.get("issue_status", "active"),
+            "desk_status": canonical_status,
+            "status": "resolved" if canonical_status == "RESOLVED" else "active",
             "priority": data.get("priority"),
             "department": data.get("department"),
             "location": data.get("location"),
             "text": data.get("text"),
             "proof_photo_url": data.get("proof_photo_url"),
             "resolution_receipt": data.get("resolution_receipt"),
+            "resolution_note": data.get("resolution_note"),
             "verified_citizen_count": data.get("verified_citizen_count", 0),
             "reopen_count": data.get("reopen_count", 0),
-            "complaint": data,
-            "timeline": timeline
+            "complaint": safe_complaint,
+            "timeline": timeline,
+            "notes": public_notes
         }
 
 @app.get("/api/issues")

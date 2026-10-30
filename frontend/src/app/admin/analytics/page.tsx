@@ -17,7 +17,7 @@ export default function AdminAnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col transition-colors">
         <AdminHeader />
         <div className="flex-1 flex items-center justify-center p-8">
           <div className="text-xs text-slate-500 font-semibold flex items-center gap-2">
@@ -34,7 +34,7 @@ export default function AdminAnalyticsPage() {
 
   if (!stats || stats.total_issues === 0) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col transition-colors">
         <AdminHeader />
         <div className="flex-1 max-w-4xl mx-auto px-4 py-16 text-center">
           <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-xs">

@@ -199,11 +199,15 @@ def run_migrations(conn: sqlite3.Connection):
         );
     """)
 
-    # 7. complaints: add citizen_email column if missing
+    # 7. complaints: add citizen_email, reporter_name, reporter_phone columns if missing
     cursor.execute("PRAGMA table_info(complaints)")
     complaint_cols = [c[1] for c in cursor.fetchall()]
     if "citizen_email" not in complaint_cols:
         cursor.execute("ALTER TABLE complaints ADD COLUMN citizen_email TEXT;")
+    if "reporter_name" not in complaint_cols:
+        cursor.execute("ALTER TABLE complaints ADD COLUMN reporter_name TEXT;")
+    if "reporter_phone" not in complaint_cols:
+        cursor.execute("ALTER TABLE complaints ADD COLUMN reporter_phone TEXT;")
 
     # 8. admin_users
     cursor.execute("""
@@ -211,21 +215,99 @@ def run_migrations(conn: sqlite3.Connection):
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             email TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
+            name TEXT,
+            role TEXT DEFAULT 'ADMIN',
+            department_slug TEXT,
+            is_active INTEGER DEFAULT 1,
+            last_login TIMESTAMP,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """)
 
-    # Seed admin user if not exists
-    cursor.execute("SELECT id FROM admin_users WHERE email = ?", (ADMIN_EMAIL,))
-    if not cursor.fetchone():
-        hashed = bcrypt.hashpw(ADMIN_PASSWORD.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-        cursor.execute("INSERT INTO admin_users (email, password_hash) VALUES (?, ?)", (ADMIN_EMAIL, hashed))
+    cursor.execute("PRAGMA table_info(admin_users)")
+    admin_cols = [c[1] for c in cursor.fetchall()]
+    for col_name, col_type in [
+        ("name", "TEXT"),
+        ("role", "TEXT DEFAULT 'ADMIN'"),
+        ("department_slug", "TEXT"),
+        ("is_active", "INTEGER DEFAULT 1"),
+        ("last_login", "TIMESTAMP")
+    ]:
+        if col_name not in admin_cols:
+            cursor.execute(f"ALTER TABLE admin_users ADD COLUMN {col_name} {col_type};")
+
+    # Seed all designated municipal role accounts
+    seeded_users = [
+        {"email": "sheshitejs@gmail.com", "name": "Sheshi Teja", "role": "SUPER_ADMIN", "department_slug": "public_works"},
+        {"email": "ssheshitej96@gmail.com", "name": "Municipal Operations Admin", "role": "ADMIN", "department_slug": "sanitation,parks_environment"},
+        {"email": "ssaicharan229@gmail.com", "name": "Sai Charan", "role": "DEPARTMENT_MANAGER", "department_slug": "water_supply"},
+        {"email": "anaalia696@gmail.com", "name": "Ana Ali", "role": "DEPARTMENT_MANAGER", "department_slug": "electricity"},
+        {"email": "nandhinichakala@gmail.com", "name": "Nandhini Chakala", "role": "DEPARTMENT_MANAGER", "department_slug": "traffic_safety"}
+    ]
+
+    hashed = bcrypt.hashpw(ADMIN_PASSWORD.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    for u in seeded_users:
+        cursor.execute("SELECT id FROM admin_users WHERE email = ?", (u["email"],))
+        existing_user = cursor.fetchone()
+        if not existing_user:
+            cursor.execute("""
+                INSERT INTO admin_users (email, password_hash, name, role, department_slug, is_active)
+                VALUES (?, ?, ?, ?, ?, 1)
+            """, (u["email"], hashed, u["name"], u["role"], u["department_slug"]))
+        else:
+            cursor.execute("""
+                UPDATE admin_users
+                SET name = ?, role = ?, department_slug = ?, password_hash = ?
+                WHERE email = ?
+            """, (u["name"], u["role"], u["department_slug"], hashed, u["email"]))
+
+    # 9. ticket_notes table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS ticket_notes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            issue_id INTEGER NOT NULL,
+            author_email TEXT NOT NULL,
+            author_name TEXT,
+            note_type TEXT DEFAULT 'internal',
+            content TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+
+    # 10. ticket_status_history table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS ticket_status_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            issue_id INTEGER NOT NULL,
+            old_status TEXT,
+            new_status TEXT NOT NULL,
+            changed_by TEXT NOT NULL,
+            reason TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+
+    # 11. notifications table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS notifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            recipient_email TEXT NOT NULL,
+            title TEXT NOT NULL,
+            message TEXT NOT NULL,
+            issue_id INTEGER,
+            is_read INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
 
     # Create helpful indexes
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_desk_events_issue_id ON desk_events(issue_id);")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_action_tokens_hash ON action_tokens(token_hash);")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_reviews_issue_id ON reviews(issue_id);")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_email_log_issue ON email_log(issue_id);")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_ticket_notes_issue ON ticket_notes(issue_id);")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_ticket_status_history_issue ON ticket_status_history(issue_id);")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_notifications_recipient ON notifications(recipient_email);")
 
     conn.commit()
 

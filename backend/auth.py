@@ -73,13 +73,22 @@ def clear_failed_attempts(ip: str, email: str):
     key = f"{ip}:{email.strip().lower()}"
     _LOGIN_ATTEMPTS.pop(key, None)
 
-def create_access_token(email: str, role: str = "commissioner") -> str:
+def create_access_token(
+    email: str,
+    role: str = "ADMIN",
+    user_id: Optional[int] = None,
+    department_slug: Optional[str] = None,
+    name: Optional[str] = None
+) -> str:
     now_utc = datetime.now(timezone.utc)
     payload = {
         "sub": email,
+        "user_id": user_id,
         "role": role,
+        "department_slug": department_slug or "",
+        "name": name or "",
         "iat": now_utc,
-        "exp": now_utc + timedelta(hours=8)
+        "exp": now_utc + timedelta(hours=12)
     }
     return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
 
@@ -92,12 +101,14 @@ def decode_access_token(token: str) -> Dict[str, Any]:
         raise HTTPException(status_code=401, detail="Invalid session credentials.")
 
 async def get_current_admin(request: Request) -> Dict[str, Any]:
-    """Dependency: Extract admin session from HttpOnly cookie or Authorization header."""
-    token = request.cookies.get("access_token")
+    """Dependency: Extract admin session from Authorization header or HttpOnly cookie."""
+    token = None
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
+
     if not token:
-        auth_header = request.headers.get("Authorization")
-        if auth_header and auth_header.startswith("Bearer "):
-            token = auth_header.split(" ")[1]
+        token = request.cookies.get("access_token")
 
     if not token:
         raise HTTPException(status_code=401, detail="Authentication required. Please sign in.")
@@ -107,11 +118,29 @@ async def get_current_admin(request: Request) -> Dict[str, Any]:
 
     with _get_db() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT id, email, role FROM admin_users WHERE email = ?", (email,))
+        cursor.execute("""
+            SELECT id, email, name, role, department_slug, is_active, last_login 
+            FROM admin_users WHERE email = ?
+        """, (email,))
         user = cursor.fetchone()
         if not user:
             raise HTTPException(status_code=401, detail="Admin account does not exist.")
+        if not user["is_active"]:
+            raise HTTPException(status_code=403, detail="Account has been deactivated.")
         return dict(user)
+
+def require_roles(allowed_roles: list[str]):
+    """Role-based access control dependency factory."""
+    async def role_checker(current_user: Dict[str, Any] = Depends(get_current_admin)):
+        user_role = (current_user.get("role") or "").upper()
+        normalized_allowed = [r.upper() for r in allowed_roles]
+        if user_role not in normalized_allowed:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Unauthorized: Access requires one of {allowed_roles}, but your role is {user_role}."
+            )
+        return current_user
+    return role_checker
 
 class LoginRequest(BaseModel):
     email: str
@@ -136,6 +165,9 @@ async def login(req: LoginRequest, request: Request, response: Response):
             record_failed_attempt(client_ip, req.email)
             raise HTTPException(status_code=401, detail="Invalid credentials.")
 
+        if not user["is_active"]:
+            raise HTTPException(status_code=403, detail="Account has been deactivated. Please contact Super Admin.")
+
         try:
             is_valid = bcrypt.checkpw(req.password.encode("utf-8"), user["password_hash"].encode("utf-8"))
         except Exception:
@@ -145,15 +177,26 @@ async def login(req: LoginRequest, request: Request, response: Response):
             record_failed_attempt(client_ip, req.email)
             raise HTTPException(status_code=401, detail="Invalid credentials.")
 
+        # Update last login timestamp
+        now = datetime.now(timezone.utc).isoformat()
+        cursor.execute("UPDATE admin_users SET last_login = ? WHERE id = ?", (now, user["id"]))
+        conn.commit()
+
         # Successful login
         clear_failed_attempts(client_ip, req.email)
-        token = create_access_token(user["email"], user["role"] or "commissioner")
+        token = create_access_token(
+            email=user["email"],
+            role=user["role"] or "ADMIN",
+            user_id=user["id"],
+            department_slug=user["department_slug"],
+            name=user["name"]
+        )
 
-        # Set HttpOnly, SameSite=Lax cookie (8 hours)
+        # Set HttpOnly, SameSite=Lax cookie (12 hours)
         response.set_cookie(
             key="access_token",
             value=token,
-            max_age=8 * 3600,
+            max_age=12 * 3600,
             httponly=True,
             samesite="lax",
             secure=False  # True in production HTTPS
@@ -164,8 +207,11 @@ async def login(req: LoginRequest, request: Request, response: Response):
             "message": "Signed in successfully",
             "token": token,
             "user": {
+                "id": user["id"],
                 "email": user["email"],
-                "role": user["role"]
+                "name": user["name"],
+                "role": user["role"],
+                "department_slug": user["department_slug"]
             }
         }
 

@@ -3,13 +3,12 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { getHealth, seedDemoData } from "@/lib/api";
+import { getHealth } from "@/lib/api";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function Navbar() {
   const pathname = usePathname();
   const [online, setOnline] = useState<boolean | null>(null);
-  const [seeding, setSeeding] = useState(false);
-  const [seedSuccess, setSeedSuccess] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -17,22 +16,6 @@ export default function Navbar() {
       .then(() => setOnline(true))
       .catch(() => setOnline(false));
   }, []);
-
-  const handleSeedDemo = async () => {
-    setSeeding(true);
-    try {
-      await seedDemoData();
-      setSeedSuccess(true);
-      setTimeout(() => {
-        setSeedSuccess(false);
-        window.location.reload();
-      }, 1200);
-    } catch {
-      alert("Failed to load demo dataset. Make sure FastAPI backend is running.");
-    } finally {
-      setSeeding(false);
-    }
-  };
 
   interface NavLinkItem {
     label: string;
@@ -44,41 +27,43 @@ export default function Navbar() {
 
   const publicLinks: NavLinkItem[] = [
     { label: "Explore Problems", href: "/map" },
-    { label: "Report a Problem", href: "/report", highlight: true },
-    { label: "Track Complaint", href: "/track" },
+    { label: "Report an Incident", href: "/request", highlight: true },
+    { label: "Track Status", href: "/track" },
     { label: "How It Works", href: "/#how-it-works" },
   ];
 
   const adminLinks: NavLinkItem[] = [
     { label: "Command Center", href: "/admin" },
+    { label: "Tickets", href: "/admin/tickets" },
     { label: "Live Map", href: "/admin/map" },
     { label: "Departments", href: "/admin/departments" },
     { label: "Analytics", href: "/admin/analytics" },
+    { label: "Users", href: "/admin/users" },
   ];
 
   const activeLinks = isPublicPage ? publicLinks : adminLinks;
 
   return (
     <>
-      <header className="bg-white/95 backdrop-blur-md border-b border-slate-200 sticky top-0 z-40 transition-colors">
+      <header className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           {/* Logo & Platform Badge */}
           <Link href="/" className="flex items-center gap-3 group focus:outline-hidden focus:ring-2 focus:ring-blue-600 rounded-lg p-1">
-            <div className="w-9 h-9 rounded-xl bg-slate-900 group-hover:bg-blue-600 text-white flex items-center justify-center transition-colors shadow-xs">
+            <div className="w-9 h-9 rounded-xl bg-slate-900 dark:bg-blue-600 group-hover:bg-blue-600 text-white flex items-center justify-center transition-colors shadow-xs">
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-base sm:text-lg font-black tracking-tight text-slate-900 leading-none">
-                  CivicPulse<span className="text-blue-600">.ai</span>
+                <span className="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white leading-none">
+                  CivicPulse<span className="text-blue-600 dark:text-blue-400">.ai</span>
                 </span>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                   {isPublicPage ? "CIVIC PLATFORM" : "ADMIN DESK"}
                 </span>
               </div>
-              <span className="text-[11px] text-slate-500 font-medium block">
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium block">
                 Intelligent City Operations
               </span>
             </div>
@@ -93,7 +78,7 @@ export default function Navbar() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="ml-2 px-3.5 py-2 text-xs font-bold rounded-lg text-white bg-blue-600 hover:bg-blue-700 shadow-xs transition-colors flex items-center gap-1.5 focus:outline-hidden focus:ring-2 focus:ring-blue-600"
+                    className="ml-2 px-3.5 py-2 text-xs font-bold rounded-lg text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 shadow-xs transition-colors flex items-center gap-1.5 focus:outline-hidden focus:ring-2 focus:ring-blue-600"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
@@ -108,8 +93,8 @@ export default function Navbar() {
                   href={link.href}
                   className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors focus:outline-hidden focus:ring-2 focus:ring-blue-600 ${
                     isActive
-                      ? "text-blue-700 bg-blue-50 font-bold"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                      ? "text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-slate-800 font-bold"
+                      : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
                   }`}
                 >
                   {link.label}
@@ -118,16 +103,19 @@ export default function Navbar() {
             })}
           </nav>
 
-          {/* Right actions: View Switcher + Demo Button + AI Status */}
+          {/* Right actions: Theme Toggle + View Switcher + AI Status */}
           <div className="hidden sm:flex items-center gap-2.5">
+            {/* Theme Toggle */}
+            <ThemeToggle />
+
             {/* Admin / Public Switcher */}
             {isPublicPage ? (
               <Link
                 href="/admin"
-                className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors flex items-center gap-1.5"
+                className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-1.5"
                 title="Switch to Municipal Operations Command Center"
               >
-                <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <svg className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
                 <span>Command Center</span>
@@ -135,38 +123,24 @@ export default function Navbar() {
             ) : (
               <Link
                 href="/"
-                className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors flex items-center gap-1.5"
+                className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-1.5"
                 title="Return to Public Citizen Portal"
               >
-                <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <svg className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
                 <span>Citizen Portal</span>
               </Link>
             )}
 
-            {/* Demo Data Button */}
-            <button
-              onClick={handleSeedDemo}
-              disabled={seeding}
-              className="text-xs font-medium px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50"
-              title="Loads realistic sample data for demonstration"
-              aria-label="Load demo data"
-            >
-              <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              <span>{seedSuccess ? "Demo Loaded" : seeding ? "Loading..." : "Demo Data"}</span>
-            </button>
-
             {/* System Status Indicator */}
             <div
               className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border flex items-center gap-1.5 ${
                 online === true
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800"
                   : online === false
-                  ? "bg-rose-50 text-rose-700 border-rose-200"
-                  : "bg-slate-50 text-slate-600 border-slate-200"
+                  ? "bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800"
+                  : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700"
               }`}
               title={online === true ? "Qwen3:4b (Triage) & BGE-M3 (Embeddings) connected" : "AI Services Disconnected"}
             >
@@ -183,7 +157,7 @@ export default function Navbar() {
           {/* Mobile Menu Trigger */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100"
+            className="md:hidden p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
             aria-label="Toggle navigation menu"
             aria-expanded={mobileMenuOpen}
           >
@@ -195,7 +169,7 @@ export default function Navbar() {
 
         {/* Mobile Dropdown */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-slate-200 bg-white p-4 space-y-2">
+          <div className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-2">
             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-1">
               {isPublicPage ? "Public Services" : "Operations Console"}
             </div>
@@ -205,38 +179,35 @@ export default function Navbar() {
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
                 className={`block px-3 py-2 rounded-lg text-sm font-semibold ${
-                  pathname === link.href ? "bg-blue-50 text-blue-700 font-bold" : "text-slate-700 hover:bg-slate-50"
+                  pathname === link.href
+                    ? "bg-blue-50 dark:bg-slate-800 text-blue-700 dark:text-blue-400 font-bold"
+                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                 }`}
               >
                 {link.label}
               </Link>
             ))}
 
-            <div className="pt-3 mt-2 border-t border-slate-100 flex items-center justify-between">
+            <div className="pt-3 mt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <Link
                 href={isPublicPage ? "/admin" : "/"}
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-xs font-semibold text-blue-600"
+                className="text-xs font-semibold text-blue-600 dark:text-blue-400"
               >
                 {isPublicPage ? "→ Switch to Command Center" : "← Switch to Citizen Portal"}
               </Link>
-              <button
-                onClick={handleSeedDemo}
-                className="text-xs font-semibold px-2.5 py-1 rounded bg-slate-100 text-slate-700"
-              >
-                Demo Data
-              </button>
+              <ThemeToggle />
             </div>
           </div>
         )}
       </header>
 
       {/* Persistent Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 py-1.5 px-3 flex items-center justify-around shadow-lg" aria-label="Mobile Bottom Navigation">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 py-1.5 px-3 flex items-center justify-around shadow-lg" aria-label="Mobile Bottom Navigation">
         <Link
           href="/"
           className={`flex flex-col items-center text-[10px] font-semibold py-1 px-2 rounded-lg ${
-            pathname === "/" ? "text-blue-600 font-bold" : "text-slate-500"
+            pathname === "/" ? "text-blue-600 dark:text-blue-400 font-bold" : "text-slate-500 dark:text-slate-400"
           }`}
         >
           <svg className="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -248,7 +219,7 @@ export default function Navbar() {
         <Link
           href="/map"
           className={`flex flex-col items-center text-[10px] font-semibold py-1 px-2 rounded-lg ${
-            pathname === "/map" ? "text-blue-600 font-bold" : "text-slate-500"
+            pathname === "/map" ? "text-blue-600 dark:text-blue-400 font-bold" : "text-slate-500 dark:text-slate-400"
           }`}
         >
           <svg className="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -258,7 +229,7 @@ export default function Navbar() {
         </Link>
 
         <Link
-          href="/report"
+          href="/request"
           className="flex flex-col items-center text-[10px] font-bold py-1.5 px-3.5 bg-blue-600 text-white rounded-xl shadow-sm -translate-y-2 focus:ring-2 focus:ring-blue-600"
         >
           <svg className="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -270,7 +241,7 @@ export default function Navbar() {
         <Link
           href="/track"
           className={`flex flex-col items-center text-[10px] font-semibold py-1 px-2 rounded-lg ${
-            pathname === "/track" ? "text-blue-600 font-bold" : "text-slate-500"
+            pathname === "/track" ? "text-blue-600 dark:text-blue-400 font-bold" : "text-slate-500 dark:text-slate-400"
           }`}
         >
           <svg className="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -282,7 +253,7 @@ export default function Navbar() {
         <Link
           href="/admin"
           className={`flex flex-col items-center text-[10px] font-semibold py-1 px-2 rounded-lg ${
-            pathname?.startsWith("/admin") ? "text-blue-600 font-bold" : "text-slate-500"
+            pathname?.startsWith("/admin") ? "text-blue-600 dark:text-blue-400 font-bold" : "text-slate-500 dark:text-slate-400"
           }`}
         >
           <svg className="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
