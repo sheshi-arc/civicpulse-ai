@@ -15,6 +15,33 @@ interface NotificationItem {
   created_at: string;
 }
 
+let cachedUserRaw: string | null = null;
+let cachedUserObj: AdminUser | null = null;
+
+function subscribeUser(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener("storage", callback);
+  return () => window.removeEventListener("storage", callback);
+}
+
+function getUserSnapshot(): AdminUser | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem("civicpulse_user");
+    if (raw !== cachedUserRaw) {
+      cachedUserRaw = raw;
+      cachedUserObj = raw ? (JSON.parse(raw) as AdminUser) : null;
+    }
+    return cachedUserObj;
+  } catch {
+    return null;
+  }
+}
+
+function getServerUserSnapshot(): AdminUser | null {
+  return null;
+}
+
 export default function AdminHeader() {
   const pathname = usePathname();
   const router = useRouter();
@@ -25,16 +52,9 @@ export default function AdminHeader() {
   const [showNotifications, setShowNotifications] = useState(false);
 
   const currentUser: AdminUser | null = useSyncExternalStore(
-    () => () => {},
-    () => {
-      try {
-        const stored = localStorage.getItem("civicpulse_user");
-        return stored ? JSON.parse(stored) : null;
-      } catch {
-        return null;
-      }
-    },
-    () => null
+    subscribeUser,
+    getUserSnapshot,
+    getServerUserSnapshot
   );
 
   useEffect(() => {

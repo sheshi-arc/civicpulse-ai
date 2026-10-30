@@ -178,3 +178,4 @@ def test_e2e_full_citizen_to_admin_lifecycle():
     users_res = client.get("/api/admin/users", headers=super_headers)
     assert users_res.status_code == 200
     assert len(users_res.json()["users"]) >= 5
+

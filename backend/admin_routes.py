@@ -619,3 +619,4 @@ async def deactivate_user(user_id: int, current_user: Dict[str, Any] = Depends(r
         cursor.execute("UPDATE admin_users SET is_active = 0 WHERE id = ?", (user_id,))
         conn.commit()
         return {"success": True, "message": f"User #{user_id} deactivated."}
+

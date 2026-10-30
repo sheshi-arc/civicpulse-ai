@@ -1,41 +1,60 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import AdminHeader from "@/components/AdminHeader";
+import AdminLoginForm from "@/components/AdminLoginForm";
 import { getAdminDashboard, getAdminMe, AdminDashboardResponse, AdminUser } from "@/lib/api";
 
 export default function AdminOverviewPage() {
-  const router = useRouter();
   const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
   const [dashboardData, setDashboardData] = useState<AdminDashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
-  useEffect(() => {
-    let ignore = false;
+  const loadData = useCallback(() => {
     getAdminMe()
       .then((userRes) => {
-        if (ignore) return;
         setCurrentUser(userRes.user);
+        setIsAuthenticated(true);
         return getAdminDashboard();
       })
       .then((dashRes) => {
-        if (!ignore && dashRes) {
+        if (dashRes) {
           setDashboardData(dashRes);
-          setLoading(false);
         }
       })
       .catch(() => {
-        if (!ignore) {
-          router.push("/admin/login");
-        }
+        setIsAuthenticated(false);
+        setCurrentUser(null);
+      })
+      .finally(() => {
+        setLoading(false);
       });
+  }, []);
 
-    return () => {
-      ignore = true;
-    };
-  }, [router]);
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  // If checking authentication
+  if (loading && isAuthenticated === null) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-100">
+        <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black text-xl shadow-lg mb-4 animate-pulse">
+          HQ
+        </div>
+        <p className="text-xs font-bold text-slate-400 tracking-wider uppercase animate-pulse">
+          Connecting to Command Center...
+        </p>
+      </div>
+    );
+  }
+
+  // If not authenticated, render login form inline
+  if (!isAuthenticated) {
+    return <AdminLoginForm onSuccess={loadData} />;
+  }
 
   const stats = dashboardData?.stats;
   const role = currentUser?.role || "OPERATIONS";
