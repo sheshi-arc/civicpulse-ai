@@ -40,6 +40,8 @@ wheels/
 .installed.cfg
 *.egg
 .pytest_cache/
+*.db
+*.sqlite3
 
 # Operating System Files
 .DS_Store

@@ -1,10 +1,10 @@
 # CivicPulse AI - Backend Service
 
-FastAPI backend service that connects citizen complaint triage, routing, and semantic similarity ("City Memory") to local AI models via Ollama.
+FastAPI backend service that connects citizen complaint triage, routing, semantic similarity ("City Memory"), and automated issue clustering to local AI models via Ollama and SQLite.
 
 ## AI Models Used
 
-- **Qwen3 (4B):** Complaint understanding, categorization, priority assessment, department routing, location extraction, and summarization.
+- **Qwen3 (4B):** Complaint understanding, categorization, priority assessment, department routing, location extraction, and dynamic title generation.
 - **BGE-M3:** Dense semantic embeddings (1024-dim) for duplicate detection and recurring issue similarity.
 
 ## Requirements
@@ -31,9 +31,15 @@ Start the FastAPI development server:
 python -m uvicorn main:app --reload --port 8000
 ```
 
-The server will be available at:
-- API Base: `http://localhost:8000`
-- Interactive API Docs (Swagger): `http://localhost:8000/docs`
-- Health Check: `http://localhost:8000/health`
-- Analyze Complaint: `http://localhost:8000/api/analyze-complaint`
-- Semantic Similarity ("City Memory"): `http://localhost:8000/api/similarity`
+The server automatically initializes `civicpulse.db` (SQLite) upon starting.
+
+### Available Endpoints
+
+- **Interactive API Docs (Swagger):** `http://localhost:8000/docs`
+- **Health Check:** `GET /health`
+- **Submit & Cluster Complaint:** `POST /api/submit-complaint`
+- **List Master Issues:** `GET /api/issues` (supports `?status=active` or `?status=resolved`)
+- **Get Issue Details:** `GET /api/issues/{issue_id}`
+- **Resolve Issue:** `PATCH /api/issues/{issue_id}/resolve`
+- **Single Complaint AI Analysis:** `POST /api/analyze-complaint`
+- **Semantic Similarity Check:** `POST /api/similarity`
