@@ -23,6 +23,18 @@ from db_migrations import run_migrations
 from desk_service import orchestrate_new_issue_workflow, orchestrate_merged_issue_workflow, send_citizen_receipt_email
 from resolution_service import process_issue_resolution
 from seed_data import seed_accountability_desk_data
+from config import (
+    HOST,
+    PORT,
+    ALLOWED_ORIGINS,
+    OLLAMA_BASE_URL,
+    OLLAMA_CHAT_URL,
+    OLLAMA_CHAT_MODEL,
+    OLLAMA_EMBED_URL,
+    OLLAMA_EMBED_MODEL,
+    SIMILARITY_THRESHOLD,
+    DB_PATH,
+)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -42,10 +54,11 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Enable CORS for frontend integration
+# Enable CORS for frontend integration (production-ready explicit origins and regex)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=r"https://civicpulse-.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -63,17 +76,7 @@ UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
-# Ollama API configurations
-OLLAMA_CHAT_URL = "http://localhost:11434/api/chat"
-OLLAMA_CHAT_MODEL = "qwen3:4b"
-
-OLLAMA_EMBED_URL = "http://localhost:11434/api/embed"
-OLLAMA_EMBED_MODEL = "bge-m3"
-SIMILARITY_THRESHOLD = 0.70
-
-# Database path
-DB_PATH = os.path.join(BASE_DIR, "civicpulse.db")
-
+# Priority configurations
 PRIORITY_LEVELS = ["Low", "Medium", "High", "Critical"]
 PRIORITY_RANK = {"low": 1, "medium": 2, "high": 3, "critical": 4}
 
@@ -189,6 +192,9 @@ init_db()
 class HealthResponse(BaseModel):
     status: str
     service: str
+    ai_status: Optional[str] = "online"
+    models: Optional[Dict[str, bool]] = None
+    city_memory: Optional[str] = "v2.0-geodesic"
 
 class ComplaintRequest(BaseModel):
     complaint: str = Field(..., description="The citizen complaint text")
@@ -446,7 +452,27 @@ def generate_tracking_id(db_conn: sqlite3.Connection) -> str:
 
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
-    return {"status": "ok", "service": "CivicPulse AI"}
+    ai_online = False
+    models_status = {"qwen3:4b": False, "bge-m3": False}
+    try:
+        async with httpx.AsyncClient(timeout=1.0) as client:
+            resp = await client.get(f"{OLLAMA_BASE_URL}/api/tags")
+            if resp.status_code == 200:
+                tags = resp.json().get("models", [])
+                tag_names = [m.get("name", "") for m in tags]
+                models_status["qwen3:4b"] = any("qwen3" in name for name in tag_names)
+                models_status["bge-m3"] = any("bge-m3" in name for name in tag_names)
+                ai_online = models_status["qwen3:4b"] and models_status["bge-m3"]
+    except Exception:
+        ai_online = False
+
+    return {
+        "status": "ok",
+        "service": "CivicPulse AI",
+        "ai_status": "online" if ai_online else "offline",
+        "models": models_status,
+        "city_memory": "v2.0-geodesic"
+    }
 
 @app.post("/api/upload")
 async def upload_photo(file: UploadFile = File(...)):
@@ -1057,3 +1083,8 @@ async def calculate_similarity(request: SimilarityRequest):
         }
     except Exception as e:
         raise HTTPException(status_code=502, detail=str(e))
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host=HOST, port=PORT, reload=False)

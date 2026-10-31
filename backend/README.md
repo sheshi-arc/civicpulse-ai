@@ -1,45 +1,66 @@
-# CivicPulse AI - Backend Service
+# CivicPulse AI — Backend Service
 
-FastAPI backend service that connects citizen complaint triage, routing, semantic similarity ("City Memory"), and automated issue clustering to local AI models via Ollama and SQLite.
+FastAPI backend service connecting citizen complaint triage, routing, semantic similarity ("City Memory 2.0"), and automated issue clustering to local/hosted AI models via Ollama and SQLite.
 
-## AI Models Used
+## AI Models
+- **Qwen3 (4B)**: Natural language comprehension, category classification, urgency assessment, safety risk detection, and municipal action recommendation.
+- **BGE-M3**: 1024-dimensional dense semantic embeddings for duplicate detection and corridor clustering.
+- **City Memory 2.0**: Geodesic proximity (Haversine $\le 1.0\text{ km}$) + Semantic similarity ($\ge 0.70$) clustering.
 
-- **Qwen3 (4B):** Complaint understanding, categorization, priority assessment, department routing, location extraction, and dynamic title generation.
-- **BGE-M3:** Dense semantic embeddings (1024-dim) for duplicate detection and recurring issue similarity.
+---
 
-## Requirements
+## ⚠️ Public Deployment Architecture
 
-- Python 3.10+
-- Ollama running locally with `qwen3:4b` and `bge-m3`
+> [!IMPORTANT]
+> **Vercel only hosts the Next.js frontend.**
+> Do **NOT** attempt to deploy Ollama or the Python FastAPI backend to Vercel.
 
-## Setup & Installation
+To run the CivicPulse AI backend publicly:
+1. **Hosting Platform**: Deploy this FastAPI backend on an environment with Python 3.10+ and access to an Ollama instance (e.g., Linux VPS, AWS EC2, GCP Compute Engine, DigitalOcean Droplet, Railway, or RunPod).
+2. **Ollama Instance**: The host or container must have `ollama` installed and models pulled:
+   ```bash
+   ollama pull qwen3:4b
+   ollama pull bge-m3:latest
+   ```
+3. **Environment Variables**:
+   ```bash
+   HOST=0.0.0.0
+   PORT=8000
+   ALLOWED_ORIGINS=https://your-vercel-domain.vercel.app,http://localhost:3000
+   OLLAMA_BASE_URL=http://localhost:11434
+   ```
 
-1. Install dependencies:
+---
+
+## Setup & Local Execution
+
+### 1. Install Dependencies
 ```bash
 python -m pip install -r requirements.txt
 ```
 
-2. Verify Ollama is running and has both models:
+### 2. Verify Ollama Models
 ```bash
 ollama list
 ```
+Ensure both `qwen3:4b` and `bge-m3:latest` are listed.
 
-## Running the Backend
-
-Start the FastAPI development server:
+### 3. Run Production Server
 ```bash
-python -m uvicorn main:app --reload --port 8000
+# Production runner (listens on 0.0.0.0, respects PORT and ALLOWED_ORIGINS)
+python main.py
+
+# Or via uvicorn directly:
+uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
-The server automatically initializes `civicpulse.db` (SQLite) upon starting.
+---
 
-### Available Endpoints
-
-- **Interactive API Docs (Swagger):** `http://localhost:8000/docs`
-- **Health Check:** `GET /health`
-- **Submit & Cluster Complaint:** `POST /api/submit-complaint`
-- **List Master Issues:** `GET /api/issues` (supports `?status=active` or `?status=resolved`)
-- **Get Issue Details:** `GET /api/issues/{issue_id}`
-- **Resolve Issue:** `PATCH /api/issues/{issue_id}/resolve`
-- **Single Complaint AI Analysis:** `POST /api/analyze-complaint`
-- **Semantic Similarity Check:** `POST /api/similarity`
+## Core Endpoints
+- **Health & AI Status**: `GET /health`
+- **Customer Complaint Submission**: `POST /api/submit-complaint`
+- **Customer Ticket Tracking**: `GET /api/complaints/track/{tracking_id}`
+- **Master Issues Map & List**: `GET /api/issues`, `GET /api/map/issues`
+- **Admin Operations Desk**: `GET /api/admin/dashboard`, `GET /api/admin/tickets`
+- **Role Authentication**: `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`
+- **City Memory Geodesic Clustering**: `POST /api/similarity`, `POST /api/analyze-complaint`

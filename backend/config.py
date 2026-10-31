@@ -39,12 +39,34 @@ SLA_RESOLVE_HOURS_DEFAULT = 0.1 if DEMO_MODE else 72.0  # 6 min in demo mode
 BASE_DIR = str(Path(__file__).resolve().parent)
 DB_PATH = str(Path(__file__).resolve().parent / "civicpulse.db")
 
+# Server host & port for production
+HOST = os.getenv("HOST", "0.0.0.0")
+PORT = int(os.getenv("PORT", "8000"))
+
+# Production-ready CORS origins
+CORS_ORIGINS_RAW = os.getenv("ALLOWED_ORIGINS") or os.getenv("CORS_ORIGINS") or ""
+DEFAULT_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "https://civicpulse-ai-git-main-hackpulse.vercel.app",
+    "https://civicpulse-q9phsg9cc-hackpulse.vercel.app",
+    "https://civicpulse-ai.vercel.app",
+]
+
+ALLOWED_ORIGINS = [orig.strip() for orig in CORS_ORIGINS_RAW.split(",") if orig.strip()] if CORS_ORIGINS_RAW else list(DEFAULT_ORIGINS)
+for d in DEFAULT_ORIGINS:
+    if d not in ALLOWED_ORIGINS:
+        ALLOWED_ORIGINS.append(d)
+
 # Ollama API configurations
-OLLAMA_CHAT_URL = os.getenv("OLLAMA_CHAT_URL", "http://localhost:11434/api/chat")
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
+OLLAMA_CHAT_URL = os.getenv("OLLAMA_CHAT_URL", f"{OLLAMA_BASE_URL}/api/chat")
 OLLAMA_CHAT_MODEL = os.getenv("OLLAMA_CHAT_MODEL", "qwen3:4b")
-OLLAMA_EMBED_URL = os.getenv("OLLAMA_EMBED_URL", "http://localhost:11434/api/embed")
+OLLAMA_EMBED_URL = os.getenv("OLLAMA_EMBED_URL", f"{OLLAMA_BASE_URL}/api/embed")
 OLLAMA_EMBED_MODEL = os.getenv("OLLAMA_EMBED_MODEL", "bge-m3")
-SIMILARITY_THRESHOLD = 0.70
+SIMILARITY_THRESHOLD = float(os.getenv("SIMILARITY_THRESHOLD", "0.70"))
 
 PRIORITY_LEVELS = ["Low", "Medium", "High", "Critical"]
 
