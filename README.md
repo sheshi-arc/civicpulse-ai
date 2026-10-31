@@ -17,8 +17,9 @@
 Traditional municipal ticket systems treat every citizen complaint as an isolated ticket. When 50 citizens report the same road crater near the university gate using 50 different phrases, legacy systems create 50 duplicate tickets, overwhelming municipal staff.
 
 **CivicPulse AI solves this with City Memory 2.0:**
-$$\text{Similar Language} + \text{Nearby Location} = \text{Consolidated Master Issue}$$
-$$\text{Similar Language} + \text{Far-Away Location} = \text{Distinct Work Orders Maintained}$$
+
+> 🔹 **Similar Language + Nearby Location** $\rightarrow$ **Consolidated Master Issue**  
+> 🔸 **Similar Language + Far-Away Location** $\rightarrow$ **Distinct Work Orders Maintained**
 
 ```
                            Citizen Complaint
