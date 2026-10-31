@@ -160,67 +160,120 @@ export default function AdminUsersPage() {
               Loading user accounts...
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-800/60 border-b border-slate-800 text-slate-400 uppercase tracking-wider text-[10px]">
-                  <tr>
-                    <th className="px-4 py-3 font-bold">Officer Name &amp; Email</th>
-                    <th className="px-4 py-3 font-bold">Assigned Role</th>
-                    <th className="px-4 py-3 font-bold">Department Scope</th>
-                    <th className="px-4 py-3 font-bold">Status</th>
-                    <th className="px-4 py-3 font-bold">Last Login</th>
-                    {isSuperAdmin && <th className="px-4 py-3 font-bold text-right">Management</th>}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/80">
-                  {users.map((u) => (
-                    <tr key={u.id} className="hover:bg-slate-800/40 transition-colors">
-                      <td className="px-4 py-3.5 space-y-0.5">
-                        <span className="font-bold text-white block">{u.name || "Officer"}</span>
-                        <span className="text-[11px] font-mono text-slate-400 block">{u.email}</span>
-                      </td>
+            <>
+              {/* Mobile Card List (< md) */}
+              <div className="md:hidden divide-y divide-slate-800/80 p-3 space-y-3">
+                {users.map((u) => (
+                  <div key={u.id} className="bg-slate-800/50 border border-slate-700/60 rounded-xl p-3.5 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-sm text-white">{u.name || "Officer"}</span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        u.role === "SUPER_ADMIN"
+                          ? "bg-purple-950 text-purple-300 border border-purple-800"
+                          : u.role === "ADMIN"
+                          ? "bg-blue-950 text-blue-300 border border-blue-800"
+                          : "bg-emerald-950 text-emerald-300 border border-emerald-800"
+                      }`}>
+                        {u.role}
+                      </span>
+                    </div>
 
-                      <td className="px-4 py-3.5 whitespace-nowrap">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                          u.role === "SUPER_ADMIN"
-                            ? "bg-purple-950 text-purple-300 border border-purple-800"
-                            : u.role === "ADMIN"
-                            ? "bg-blue-950 text-blue-300 border border-blue-800"
-                            : "bg-emerald-950 text-emerald-300 border border-emerald-800"
-                        }`}>
-                          {u.role}
-                        </span>
-                      </td>
+                    <div className="text-xs text-slate-400 space-y-0.5">
+                      <p className="font-mono text-[11px] text-slate-300">{u.email}</p>
+                      <p>Department: <strong className="text-slate-200">{u.department_slug?.replace("_", " ") || "All Departments"}</strong></p>
+                    </div>
 
-                      <td className="px-4 py-3.5 text-slate-300 font-medium whitespace-nowrap">
-                        {u.department_slug?.replace("_", " ") || "All Departments"}
-                      </td>
-
-                      <td className="px-4 py-3.5 whitespace-nowrap">
-                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold ${
-                          u.is_active
-                            ? "bg-emerald-950 text-emerald-300 border border-emerald-800"
-                            : "bg-rose-950 text-rose-300 border border-rose-800"
-                        }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${u.is_active ? "bg-emerald-400" : "bg-rose-400"}`} />
-                          {u.is_active ? "Active" : "Deactivated"}
-                        </span>
-                      </td>
-
-                      <td className="px-4 py-3.5 whitespace-nowrap text-slate-400 text-[11px]">
-                        {u.last_login ? new Date(u.last_login).toLocaleString() : "Never logged in"}
-                      </td>
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-700/50">
+                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold ${
+                        u.is_active
+                          ? "bg-emerald-950 text-emerald-300 border border-emerald-800"
+                          : "bg-rose-950 text-rose-300 border border-rose-800"
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${u.is_active ? "bg-emerald-400" : "bg-rose-400"}`} />
+                        {u.is_active ? "Active" : "Deactivated"}
+                      </span>
 
                       {isSuperAdmin && (
-                        <td className="px-4 py-3.5 whitespace-nowrap text-right">
-                          <button
-                            type="button"
-                            onClick={() => handleToggleActive(u)}
-                            disabled={u.id === currentUser?.id}
-                            className={`px-2.5 py-1 rounded text-[11px] font-semibold border transition-colors cursor-pointer disabled:opacity-30 ${
-                              u.is_active
-                                ? "bg-rose-950/60 hover:bg-rose-900 border-rose-800 text-rose-300"
-                                : "bg-emerald-950/60 hover:bg-emerald-900 border-emerald-800 text-emerald-300"
+                        <button
+                          type="button"
+                          onClick={() => handleToggleActive(u)}
+                          disabled={u.id === currentUser?.id}
+                          className={`px-3 py-1 rounded text-xs font-semibold border transition-colors cursor-pointer disabled:opacity-30 ${
+                            u.is_active
+                              ? "bg-rose-950/60 hover:bg-rose-900 border-rose-800 text-rose-300"
+                              : "bg-emerald-950/60 hover:bg-emerald-900 border-emerald-800 text-emerald-300"
+                          }`}
+                        >
+                          {u.is_active ? "Deactivate" : "Activate"}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table (>= md) */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-800/60 border-b border-slate-800 text-slate-400 uppercase tracking-wider text-[10px]">
+                    <tr>
+                      <th className="px-4 py-3 font-bold">Officer Name &amp; Email</th>
+                      <th className="px-4 py-3 font-bold">Assigned Role</th>
+                      <th className="px-4 py-3 font-bold">Department Scope</th>
+                      <th className="px-4 py-3 font-bold">Status</th>
+                      <th className="px-4 py-3 font-bold">Last Login</th>
+                      {isSuperAdmin && <th className="px-4 py-3 font-bold text-right">Management</th>}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/80">
+                    {users.map((u) => (
+                      <tr key={u.id} className="hover:bg-slate-800/40 transition-colors">
+                        <td className="px-4 py-3.5 space-y-0.5">
+                          <span className="font-bold text-white block">{u.name || "Officer"}</span>
+                          <span className="text-[11px] font-mono text-slate-400 block">{u.email}</span>
+                        </td>
+
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            u.role === "SUPER_ADMIN"
+                              ? "bg-purple-950 text-purple-300 border border-purple-800"
+                              : u.role === "ADMIN"
+                              ? "bg-blue-950 text-blue-300 border border-blue-800"
+                              : "bg-emerald-950 text-emerald-300 border border-emerald-800"
+                          }`}>
+                            {u.role}
+                          </span>
+                        </td>
+
+                        <td className="px-4 py-3.5 text-slate-300 font-medium whitespace-nowrap">
+                          {u.department_slug?.replace("_", " ") || "All Departments"}
+                        </td>
+
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold ${
+                            u.is_active
+                              ? "bg-emerald-950 text-emerald-300 border border-emerald-800"
+                              : "bg-rose-950 text-rose-300 border border-rose-800"
+                          }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${u.is_active ? "bg-emerald-400" : "bg-rose-400"}`} />
+                            {u.is_active ? "Active" : "Deactivated"}
+                          </span>
+                        </td>
+
+                        <td className="px-4 py-3.5 whitespace-nowrap text-slate-400 text-[11px]">
+                          {u.last_login ? new Date(u.last_login).toLocaleString() : "Never logged in"}
+                        </td>
+
+                        {isSuperAdmin && (
+                          <td className="px-4 py-3.5 whitespace-nowrap text-right">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleActive(u)}
+                              disabled={u.id === currentUser?.id}
+                              className={`px-2.5 py-1 rounded text-[11px] font-semibold border transition-colors cursor-pointer disabled:opacity-30 ${
+                                u.is_active
+                              ? "bg-rose-950/60 hover:bg-rose-900 border-rose-800 text-rose-300"
+                              : "bg-emerald-950/60 hover:bg-emerald-900 border-emerald-800 text-emerald-300"
                             }`}
                           >
                             {u.is_active ? "Deactivate" : "Activate"}
@@ -232,7 +285,8 @@ export default function AdminUsersPage() {
                 </tbody>
               </table>
             </div>
-          )}
+          </>
+        )}
         </div>
 
         {/* MODAL: Add New User */}

@@ -222,45 +222,18 @@ export default function AdminTicketsPage() {
               No tickets found matching the selected criteria.
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-800/60 border-b border-slate-800 text-slate-400 uppercase tracking-wider text-[10px]">
-                  <tr>
-                    <th className="px-4 py-3 font-bold">ID</th>
-                    <th className="px-4 py-3 font-bold">Work Order Details</th>
-                    <th className="px-4 py-3 font-bold">Priority</th>
-                    <th className="px-4 py-3 font-bold">Department</th>
-                    <th className="px-4 py-3 font-bold">Desk Status</th>
-                    <th className="px-4 py-3 font-bold">Assigned To</th>
-                    <th className="px-4 py-3 font-bold text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/80">
-                  {tickets.map((t) => {
-                    const st = t.desk_status?.toUpperCase() || "NEW";
-                    return (
-                      <tr key={t.id} className="hover:bg-slate-800/40 transition-colors">
-                        <td className="px-4 py-3.5 font-mono text-slate-400 font-bold">
-                          #{t.id}
-                        </td>
-                        <td className="px-4 py-3.5 space-y-0.5">
-                          <Link
-                            href={`/admin/tickets/${t.id}`}
-                            className="font-bold text-white hover:text-blue-400 line-clamp-1"
-                          >
-                            {t.title}
-                          </Link>
-                          <span className="text-[11px] text-slate-400 block truncate">
-                            {t.location} • {t.complaint_count} report(s)
+            <>
+              {/* Mobile Card View (< md) */}
+              <div className="md:hidden divide-y divide-slate-800/80 p-3 space-y-3">
+                {tickets.map((t) => {
+                  const st = t.desk_status?.toUpperCase() || "NEW";
+                  return (
+                    <div key={t.id} className="bg-slate-800/50 border border-slate-700/60 rounded-xl p-3.5 space-y-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs font-bold text-blue-400 bg-blue-950/60 px-2 py-0.5 rounded border border-blue-900">
+                            #{t.id}
                           </span>
-                        </td>
-                        <td className="px-4 py-3.5 whitespace-nowrap">
-                          <PriorityBadge priority={t.priority} />
-                        </td>
-                        <td className="px-4 py-3.5 whitespace-nowrap text-slate-300 font-medium">
-                          {t.department}
-                        </td>
-                        <td className="px-4 py-3.5 whitespace-nowrap">
                           <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                             st === "RESOLVED"
                               ? "bg-emerald-950 text-emerald-300 border border-emerald-800"
@@ -276,38 +249,144 @@ export default function AdminTicketsPage() {
                           }`}>
                             {st}
                           </span>
-                        </td>
-                        <td className="px-4 py-3.5 whitespace-nowrap text-slate-400 text-[11px]">
-                          {t.assigned_officer_email || <span className="italic text-slate-500">Unassigned</span>}
-                        </td>
-                        <td className="px-4 py-3.5 whitespace-nowrap text-right space-x-1">
-                          <button
-                            type="button"
-                            onClick={() => openAssignModal(t)}
-                            className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold transition-colors cursor-pointer"
-                          >
-                            Assign
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => openStatusModal(t)}
-                            className="px-2 py-1 rounded bg-blue-950 hover:bg-blue-900 text-blue-300 border border-blue-800 text-[11px] font-semibold transition-colors cursor-pointer"
-                          >
-                            Status
-                          </button>
-                          <Link
-                            href={`/admin/tickets/${t.id}`}
-                            className="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold transition-colors inline-block"
-                          >
-                            View
-                          </Link>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                        </div>
+                        <PriorityBadge priority={t.priority} />
+                      </div>
+
+                      <div>
+                        <Link
+                          href={`/admin/tickets/${t.id}`}
+                          className="font-bold text-sm text-white hover:text-blue-400 block"
+                        >
+                          {t.title}
+                        </Link>
+                        <p className="text-[11px] text-slate-400 mt-0.5">
+                          📍 {t.location} • <strong className="text-slate-300">{t.complaint_count} report(s)</strong>
+                        </p>
+                        <span className="text-[10px] text-blue-300 bg-slate-900/60 px-1.5 py-0.5 rounded inline-block mt-1">
+                          🏢 {t.department}
+                        </span>
+                      </div>
+
+                      <div className="text-[11px] text-slate-400 pt-1 border-t border-slate-700/50 flex items-center justify-between">
+                        <span>Assignee: <strong className="text-slate-300">{t.assigned_officer_email || "Unassigned"}</strong></span>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => openAssignModal(t)}
+                          className="w-full py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold text-center transition-colors"
+                        >
+                          Assign
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openStatusModal(t)}
+                          className="w-full py-1.5 rounded-lg bg-blue-950 hover:bg-blue-900 text-blue-300 border border-blue-800 text-xs font-semibold text-center transition-colors"
+                        >
+                          Status
+                        </button>
+                        <Link
+                          href={`/admin/tickets/${t.id}`}
+                          className="w-full py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold text-center transition-colors flex items-center justify-center"
+                        >
+                          View
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Desktop Table (>= md) */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-800/60 border-b border-slate-800 text-slate-400 uppercase tracking-wider text-[10px]">
+                    <tr>
+                      <th className="px-4 py-3 font-bold">ID</th>
+                      <th className="px-4 py-3 font-bold">Work Order Details</th>
+                      <th className="px-4 py-3 font-bold">Priority</th>
+                      <th className="px-4 py-3 font-bold">Department</th>
+                      <th className="px-4 py-3 font-bold">Desk Status</th>
+                      <th className="px-4 py-3 font-bold">Assigned To</th>
+                      <th className="px-4 py-3 font-bold text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/80">
+                    {tickets.map((t) => {
+                      const st = t.desk_status?.toUpperCase() || "NEW";
+                      return (
+                        <tr key={t.id} className="hover:bg-slate-800/40 transition-colors">
+                          <td className="px-4 py-3.5 font-mono text-slate-400 font-bold">
+                            #{t.id}
+                          </td>
+                          <td className="px-4 py-3.5 space-y-0.5">
+                            <Link
+                              href={`/admin/tickets/${t.id}`}
+                              className="font-bold text-white hover:text-blue-400 line-clamp-1"
+                            >
+                              {t.title}
+                            </Link>
+                            <span className="text-[11px] text-slate-400 block truncate">
+                              {t.location} • {t.complaint_count} report(s)
+                            </span>
+                          </td>
+                          <td className="px-4 py-3.5 whitespace-nowrap">
+                            <PriorityBadge priority={t.priority} />
+                          </td>
+                          <td className="px-4 py-3.5 whitespace-nowrap text-slate-300 font-medium">
+                            {t.department}
+                          </td>
+                          <td className="px-4 py-3.5 whitespace-nowrap">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                              st === "RESOLVED"
+                                ? "bg-emerald-950 text-emerald-300 border border-emerald-800"
+                                : st === "COMPLETED"
+                                ? "bg-blue-950 text-blue-300 border border-blue-800"
+                                : st === "ON_HOLD"
+                                ? "bg-amber-950 text-amber-300 border border-amber-800"
+                                : st === "IN_PROGRESS"
+                                ? "bg-indigo-950 text-indigo-300 border border-indigo-800"
+                                : st === "ASSIGNED"
+                                ? "bg-sky-950 text-sky-300 border border-sky-800"
+                                : "bg-slate-800 text-slate-300 border border-slate-700"
+                            }`}>
+                              {st}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3.5 whitespace-nowrap text-slate-400 text-[11px]">
+                            {t.assigned_officer_email || <span className="italic text-slate-500">Unassigned</span>}
+                          </td>
+                          <td className="px-4 py-3.5 whitespace-nowrap text-right space-x-1">
+                            <button
+                              type="button"
+                              onClick={() => openAssignModal(t)}
+                              className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold transition-colors cursor-pointer"
+                            >
+                              Assign
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => openStatusModal(t)}
+                              className="px-2 py-1 rounded bg-blue-950 hover:bg-blue-900 text-blue-300 border border-blue-800 text-[11px] font-semibold transition-colors cursor-pointer"
+                            >
+                              Status
+                            </button>
+                            <Link
+                              href={`/admin/tickets/${t.id}`}
+                              className="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold transition-colors inline-block"
+                            >
+                              View
+                            </Link>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
 

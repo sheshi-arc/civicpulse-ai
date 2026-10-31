@@ -57,8 +57,8 @@ app = FastAPI(
 # Enable CORS for frontend integration (production-ready explicit origins and regex)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
-    allow_origin_regex=r"https://civicpulse-.*\.vercel\.app",
+    allow_origins=ALLOWED_ORIGINS + ["https://sheshi-arc.github.io"],
+    allow_origin_regex=r"https://civicpulse-.*\.vercel\.app|https://.*\.github\.io|http://localhost:\d+|http://127\.0\.0\.1:\d+|http://(192\.168|10\.|172\.(1[6-9]|2[0-9]|3[0-1]))\..*:\d+",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -50,6 +50,7 @@ DEFAULT_ORIGINS = [
     "http://127.0.0.1:3000",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
+    "https://sheshi-arc.github.io",
     "https://civicpulse-ai-git-main-hackpulse.vercel.app",
     "https://civicpulse-q9phsg9cc-hackpulse.vercel.app",
     "https://civicpulse-ai.vercel.app",

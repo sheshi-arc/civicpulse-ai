@@ -135,14 +135,14 @@ export default function AdminHeader() {
         </div>
 
         {/* Center: Admin Tab Navigation */}
-        <nav className="flex items-center gap-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700/80">
+        <nav className="flex items-center gap-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700/80 overflow-x-auto max-w-full">
           {adminNav.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors shrink-0 ${
                   isActive
                     ? "bg-blue-600 text-white font-bold shadow-xs"
                     : "text-slate-300 hover:text-white hover:bg-slate-700/60"
