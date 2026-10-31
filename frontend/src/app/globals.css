@@ -1,5 +1,8 @@
 @import "tailwindcss";
+@source "../**/*.{js,ts,jsx,tsx}";
 @import "leaflet/dist/leaflet.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   color-scheme: light;
@@ -25,16 +28,6 @@ html, body {
 main {
   background-color: var(--background);
   color: var(--foreground);
-}
-
-html.dark body {
-  background-color: #090d16 !important;
-  color: #f1f5f9 !important;
-}
-
-html.dark main {
-  background-color: #090d16 !important;
-  color: #f1f5f9 !important;
 }
 
 /* Leaflet Container & Marker fixes */

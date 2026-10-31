@@ -31,15 +31,13 @@ export default function RootLayout({
       style={{ colorScheme: "light" }}
     >
       <body
-        className="min-h-full flex flex-col bg-slate-50 text-slate-900 font-sans pb-16 md:pb-0"
-        style={{ backgroundColor: "#f8fafc", color: "#0f172a" }}
+        className="min-h-full flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans pb-16 md:pb-0"
       >
-        <Suspense fallback={<div className="h-16 bg-white border-b border-slate-200" />}>
+        <Suspense fallback={<div className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800" />}>
           <Navbar />
         </Suspense>
         <main
-          className="flex-1 flex flex-col bg-slate-50 text-slate-900"
-          style={{ backgroundColor: "#f8fafc" }}
+          className="flex-1 flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100"
         >
           {children}
         </main>
